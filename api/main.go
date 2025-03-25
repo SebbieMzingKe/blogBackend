@@ -42,4 +42,8 @@ func main() {
 	if err := http.ListenAndServe(":8000", r); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
+
+	// default handler /./
+	http.Handle("/", r)
+
 }
