@@ -3,6 +3,7 @@ package main
 import (
 	"blogBackend/internal/database"
 	"blogBackend/internal/handlers"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -31,6 +32,11 @@ func main() {
 
 	// set up router
 	r := mux.NewRouter()
+
+	// Default homepage
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "🚀 Welcome to the Blog API! Access the API at /api/blogs")
+	})
 
 	r.HandleFunc("/blogs", handlers.GetBlogs).Methods("GET")
 	r.HandleFunc("/blogs/{id}", handlers.GetBlog).Methods("GET")
