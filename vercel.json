@@ -3,7 +3,8 @@
   "builds": [
     {
       "src": "api/handler/index.go",
-      "use": "@vercel/go"
+      "use": "@vercel/go",
+      "config": { "goVersion": "1.23" }
     }
   ],
   "routes": [
