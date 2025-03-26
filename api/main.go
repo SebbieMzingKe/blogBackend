@@ -49,8 +49,8 @@ func main() {
 	// root route
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"https://react-blog-three-orcin.vercel.app/"},
-		AllowedMethods: []string{"GET", "POST", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedMethods: []string{"GET", "POST", "DELETE"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
 
