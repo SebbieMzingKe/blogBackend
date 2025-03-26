@@ -5,6 +5,7 @@
 *.test
 *.prof
 *.out
+*.exe
 
 vendor/
 tmp/
