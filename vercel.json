@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/handler/index.go"
+      "dest": "api/handler/index.go"
     }
   ]
 }
