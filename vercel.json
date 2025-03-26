@@ -4,7 +4,7 @@
     {
       "src": "api/handler/index.go",
       "use": "@vercel/go",
-      "config": { "goVersion": "1.23" }
+      "config": { "goVersion": "1.22" }
     }
   ],
   "routes": [
