@@ -37,7 +37,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "🚀 Welcome to the Blog API! Access the API at /api/blogs")
+		fmt.Fprintln(w, "🚀 Welcome to the Blog API! Access the API at /blogs")
 	})
 
 	r.HandleFunc("/blogs", handlers.GetBlogs).Methods("GET")
