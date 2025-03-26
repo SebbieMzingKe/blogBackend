@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -44,6 +45,17 @@ func main() {
 	r.HandleFunc("/blogs", handlers.CreateBlog).Methods("POST")
 	r.HandleFunc("/blogs/{id}", handlers.DeleteBlog).Methods("DELETE")
 
+
+	// root route
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"https://react-blog-three-orcin.vercel.app/"},
+		AllowedMethods: []string{"GET", "POST", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(r)
+
 	// Start server with dynamic port
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -51,5 +63,5 @@ func main() {
 	}
 
 	log.Printf("Server listening on %s...\n", listener.Addr().String())
-	log.Fatal(http.Serve(listener, r))
+	log.Fatal(http.Serve(listener, handler))
 }
