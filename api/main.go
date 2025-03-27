@@ -114,7 +114,7 @@ func main() {
 
 	// Enable CORS (Correct Configuration)
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://react-blog-three-orcin.vercel.app", "http://localhost:3000/"}, // React Frontend
+		AllowedOrigins:   []string{"https://react-blog-three-orcin.vercel.app", "http://localhost:3000"}, // React Frontend
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
