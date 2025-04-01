@@ -28,7 +28,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := database.CreateUser(user.Email, string(hashedPassword), user.Name.String); err != nil {
+	if err := database.CreateUser(user.Email, string(hashedPassword), user.Name); err != nil {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
