@@ -1,12 +1,18 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecret = []byte("secret-key")
+
+type contextKey string
+
+const UserIDKey contextKey = "user_id"
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
 		authHeader := r.Header.Get("Authorization")		
@@ -26,6 +32,25 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+
+		if !ok{
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		userIDFloat, ok := claims["user_id"].(float64)
+
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		userID := int(userIDFloat)
+
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

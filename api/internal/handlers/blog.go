@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"blogBackend/internal/database"
+	"blogBackend/internal/middleware"
 	"blogBackend/internal/models"
 	"database/sql"
 	"encoding/json"
@@ -71,10 +72,19 @@ func CreateBlog(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+
     err := database.DB.QueryRow(
         "INSERT INTO blogs (title, body, author) VALUES ($1, $2, $3) RETURNING id, created_at",
-        b.Title, b.Body, b.Author,
+        b.Title, b.Body, userID,
     ).Scan(&b.ID, &b.CreatedAt)
+
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
