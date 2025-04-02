@@ -40,10 +40,11 @@ func main() {
 	// API routes
 	r.HandleFunc("/signup", handlers.SignUp).Methods("POST")
 	r.HandleFunc("/signin", handlers.SignIn).Methods("POST")
-	r.HandleFunc("/blogs", handlers.GetBlogs).Methods("GET", "OPTIONS")
-	r.HandleFunc("/blogs/{id}", handlers.GetBlog).Methods("GET", "OPTIONS")
+	r.Handle("/blogs", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetBlogs))).Methods("GET", "OPTIONS")
+	r.Handle("/blogs/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetBlog))).Methods("GET", "OPTIONS")
 	r.Handle("/blogs", middleware.AuthMiddleware(http.HandlerFunc(handlers.CreateBlog))).Methods("POST", "OPTIONS")
 	r.Handle("/blogs/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.DeleteBlog))).Methods("DELETE", "OPTIONS")
+	
 
 	// Enable CORS 
 	corsHandler := cors.New(cors.Options{
