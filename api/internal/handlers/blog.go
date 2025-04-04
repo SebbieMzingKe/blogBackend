@@ -14,37 +14,35 @@ import (
 
 // get all blogs
 func GetBlogs(w http.ResponseWriter, r *http.Request) {
-	// Extract user ID from context
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+    // Get email from context
+    userEmail, ok := r.Context().Value("user_email").(string)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
-	// Fetch only blogs belonging to the logged-in user
-	rows, err := database.DB.Query("SELECT id, title, body, author, created_at FROM blogs WHERE author = $1", userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    // Fetch blogs where the author is the logged-in user's email
+    rows, err := database.DB.Query("SELECT id, title, body, author, created_at FROM blogs WHERE author = $1", userEmail)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	var blogs []models.Blog
-	for rows.Next() {
-		var b models.Blog
-		err := rows.Scan(&b.ID, &b.Title, &b.Body, &b.Author, &b.CreatedAt)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		blogs = append(blogs, b)
-	}
+    var blogs []models.Blog
+    for rows.Next() {
+        var b models.Blog
+        err := rows.Scan(&b.ID, &b.Title, &b.Body, &b.Author, &b.CreatedAt)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        blogs = append(blogs, b)
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(blogs)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(blogs)
 }
-
-
 
 // get a single blog id
 func GetBlog(w http.ResponseWriter, r *http.Request) {
@@ -87,30 +85,29 @@ func GetBlog(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(b)
 }
 
-
 // create new blog
 func CreateBlog(w http.ResponseWriter, r *http.Request) {
     var b models.Blog
     if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        http.Error(w, "Invalid input", http.StatusBadRequest)
         return
     }
 
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+    // Get email from context
+    userEmail, ok := r.Context().Value("user_email").(string)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-
+    // Insert blog with associated email
     err := database.DB.QueryRow(
         "INSERT INTO blogs (title, body, author) VALUES ($1, $2, $3) RETURNING id, created_at",
-        b.Title, b.Body, userID,
+        b.Title, b.Body, userEmail, 
     ).Scan(&b.ID, &b.CreatedAt)
 
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        http.Error(w, "Error saving blog", http.StatusInternalServerError)
         return
     }
 
@@ -122,54 +119,44 @@ func CreateBlog(w http.ResponseWriter, r *http.Request) {
 
 // delete a single blog
 func DeleteBlog(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(w, "Invalid Blog ID", http.StatusBadRequest)
-		return
-	}
+    vars := mux.Vars(r)
+    id, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        http.Error(w, "Invalid Blog ID", http.StatusBadRequest)
+        return
+    }
 
-	// Extract authenticated user ID from context
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+    // Get logged-in user's email
+    userEmail, ok := r.Context().Value("user_email").(string)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
-	// Check if the blog belongs to the user
-	var authorID int
-	err = database.DB.QueryRow("SELECT author FROM blogs WHERE id = $1", id).Scan(&authorID)
-	if err == sql.ErrNoRows {
-		http.Error(w, "Blog not found", http.StatusNotFound)
-		return
-	} else if err != nil {
-		http.Error(w, "Error retrieving blog", http.StatusInternalServerError)
-		return
-	}
+    // Check if the blog belongs to the logged-in user
+    var authorEmail string
+    err = database.DB.QueryRow("SELECT author FROM blogs WHERE id = $1", id).Scan(&authorEmail)
+    if err == sql.ErrNoRows {
+        http.Error(w, "Blog not found", http.StatusNotFound)
+        return
+    } else if err != nil {
+        http.Error(w, "Error retrieving blog", http.StatusInternalServerError)
+        return
+    }
 
-	// Ensure the authenticated user is the blog owner
-	if authorID != userID {
-		http.Error(w, "Forbidden: You can only delete your own blogs", http.StatusForbidden)
-		return
-	}
+    // Ensure the logged-in user is the owner
+    if authorEmail != userEmail {
+        http.Error(w, "Unauthorized: You can only delete your own blogs", http.StatusForbidden)
+        return
+    }
 
-	// Proceed with deletion if the user owns the blog
-	result, err := database.DB.Exec("DELETE FROM blogs WHERE id = $1", id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    // Delete the blog
+    _, err = database.DB.Exec("DELETE FROM blogs WHERE id = $1", id)
+    if err != nil {
+        http.Error(w, "Error deleting blog", http.StatusInternalServerError)
+        return
+    }
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		http.Error(w, "Error processing delete request", http.StatusInternalServerError)
-		return
-	}
-
-	if rowsAffected == 0 {
-		http.Error(w, "Blog not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+    w.WriteHeader(http.StatusNoContent)
 }
+

@@ -61,6 +61,7 @@ func SignIn(w http.ResponseWriter, r *http.Request)  {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
+		"email": user.Email,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})
 
@@ -71,4 +72,18 @@ func SignIn(w http.ResponseWriter, r *http.Request)  {
 	}
 
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+}
+
+func SignOut(w http.ResponseWriter, r *http.Request) {
+	// Remove the token from cookies
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Expires:  time.Unix(0, 0), // Expire immediately
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"})
 }

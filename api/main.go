@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	// Load .env file (for local development)
+
 	_ = godotenv.Load()
 
 	// Get database connection string
@@ -32,7 +32,6 @@ func main() {
 	// Set up router
 	r := mux.NewRouter()
 
-	// Default homepage
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "🚀 Welcome to the Blog API! Access the API at /blogs")
 	})
@@ -40,6 +39,7 @@ func main() {
 	// API routes
 	r.HandleFunc("/signup", handlers.SignUp).Methods("POST")
 	r.HandleFunc("/signin", handlers.SignIn).Methods("POST")
+	r.Handle("/logout", middleware.AuthMiddleware(http.HandlerFunc(handlers.SignOut))).Methods("POST")
 	r.Handle("/blogs", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetBlogs))).Methods("GET", "OPTIONS")
 	r.Handle("/blogs/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetBlog))).Methods("GET", "OPTIONS")
 	r.Handle("/blogs", middleware.AuthMiddleware(http.HandlerFunc(handlers.CreateBlog))).Methods("POST", "OPTIONS")
