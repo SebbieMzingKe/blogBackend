@@ -36,6 +36,10 @@ func main() {
 		fmt.Fprintln(w, "🚀 Welcome to the Blog API! Access the API at /blogs")
 	})
 
+	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(w, "pong")
+	}).Methods("GET")
+
 	// API routes
 	r.HandleFunc("/signup", handlers.SignUp).Methods("POST")
 	r.HandleFunc("/signin", handlers.SignIn).Methods("POST")
